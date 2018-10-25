@@ -2,7 +2,10 @@
 
 namespace naoki1510\titleshop;
 
-/** @todo remove not to use. */
+/** 
+ * @todo remove not to use. 
+ * いらないものを消す
+ */
 use onebone\economyapi\EconomyAPI;
 use pocketmine\Player;
 use pocketmine\Server;
@@ -40,9 +43,6 @@ use naoki1510\nametagapi\NameTagAPI;
 
 class TitleShop extends PluginBase implements Listener
 {
-    /** @var Weapon[] */
-    //private $listeners;
-
     /** @var string[] */
     private $cue = [];
 
@@ -50,6 +50,7 @@ class TitleShop extends PluginBase implements Listener
     {
 		// 起動時のメッセージ
         $this->getLogger()->info("§eTitleShop was loaded.");
+        // デフォルトファイル保存（まだ作ってない
         $this->saveDefaultConfig();
 		// イベントリスナー登録
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
@@ -60,12 +61,12 @@ class TitleShop extends PluginBase implements Listener
     public function onPlayerTap(PlayerInteractEvent $e)
     {
         $player = $e->getPlayer();
-        // スニークしてる時はパス
+        // スニークしてる時は無視
         if ($player->isSneaking()) return;
-
+        // ブロックの取得
         $block = $e->getBlock();
         switch ($block->getId()) {
-            // 看板のID
+            // 看板のIDの時
             case Block::WALL_SIGN:
             case Block::SIGN_POST:
                 $sign = $block->getLevel()->getTile($block->asPosition());
@@ -75,7 +76,7 @@ class TitleShop extends PluginBase implements Listener
                 if (preg_match('/^(§[0-9a-fklmnor])*\[Title(Shop)?\]$/iu', trim($sign->getLine(0))) != 1) return;
                 // コストをConfigから取得
                 $cost = $this->getConfig()->get('cost', 1000);
-                // Kit購入
+                // 称号購入
                 $this->buy($player);
                 
                 break;
@@ -93,7 +94,7 @@ class TitleShop extends PluginBase implements Listener
         if (preg_match('/^(§[0-9a-fklmnor])*\[?Title(Shop)?\]?$/iu', trim($e->getLine(0))) == 1) {
             if(!$e->getPlayer()->isOp()){
                 $e->getPlayer()->sendMessage('You must be op to create shop sign.');
-                $e->setLines(['You must be op.', 'You must be op.', 'You must be op.', 'You must be op.']);
+                $e->setLines(['§aYou must be op.', '§bYou must be op.', '§cYou must be op.', '§dYou must be op.']);
                 return;
             }
             $this->reloadSign($e);
@@ -108,7 +109,7 @@ class TitleShop extends PluginBase implements Listener
                 preg_match('/^(§[0-9a-fklmnor])*(.*)$/u', trim($sign->getLine(1)), $m);
                 
                 $sign->setLine(0, '§a[TitleShop]');
-                $sign->setLine(1, '§l自由に称号を変更できます。');
+                $sign->setLine(1, '§l称号をつけることが出来ます');
                 $sign->setLine(2, '§c一度の変更につき$' . $this->getConfig()->get('cost', 1000) . 'かかります。');
             }
         } catch (\BadMethodCallException $e) {
@@ -160,9 +161,13 @@ class TitleShop extends PluginBase implements Listener
             $this->cue[$player->getName()] = null;
             return;
         } 
-        if(isset($data[0])){
+        if(empty($data[0]))
+            NameTagAPI::getInstance()->setTag($this, $player, '', NameTagAPI::POS_LEFT);
+            $player->sendMessage("Your tag was reset.");
+        }else{
             NameTagAPI::getInstance()->setTag($this, $player, '[' . $data[0] . '§r]', NameTagAPI::POS_LEFT);
             $player->sendMessage("Your tag was changed.");
+            // todo: reduce money
         }
         $this->cue[$player->getName()] = null;
     }
